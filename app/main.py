@@ -11,7 +11,6 @@ def main():
     #
     server_socket = socket.create_server(("localhost", 6379), reuse_port=True)
     server_socket.accept() # wait for client
-    raw_request = server_socket.recv(1024)
     server_socket.sendall(b"+PONG\r\n")
 
 if __name__ == "__main__":
