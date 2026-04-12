@@ -1,6 +1,5 @@
 import socket  # noqa: F401
 from  threading import Thread
-import asyncio
 
 class Redis():
     def __init__(self, host, port):
@@ -20,10 +19,11 @@ class Redis():
     def handle_client(self, connection):
         with connection:
             try:
-                raw_request = connection.recv(1024).decode()
-                if not raw_request:
-                    return
-                connection.sendall(b"+PONG\r\n")
+                while True:
+                    raw_request = connection.recv(1024).decode()
+                    if not raw_request:
+                        return
+                    connection.sendall(b"+PONG\r\n")
             
             except Exception as e:
                 print(e)
@@ -43,7 +43,7 @@ def main():
     # while True:
     #     connection.recv(1024).decode()
     #     connection.sendall(b"+PONG\r\n")
-    server_socket = Redis(("localhost", 6379), reuse_port=True)
+    server_socket = Redis("localhost", 6379)
 
 if __name__ == "__main__":
     main()
