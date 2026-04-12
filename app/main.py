@@ -6,6 +6,7 @@ class Redis():
     def __init__(self, host, port):
         self.host = host
         self.port = port
+        self.running = True
         self.start_server()
     
     def start_server(self):
