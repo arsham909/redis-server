@@ -12,7 +12,7 @@ class Redis():
             print(f"Server is open on port {self.port}")
             while True:
                 connection, address = server.accept()
-                Thread(target=self.handle_client, args=(connection,)).start()
+                Thread(target=self._handle_client, args=(connection,)).start()
     
     def _handle_client(self, connection: socket.socket):
         with connection:
