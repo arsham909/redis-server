@@ -50,13 +50,14 @@ class Redis():
                 else:
                     break
             test.append(data[len(number) :])  
-        output['command'] = test[0]
+        output['command'] = test[0].lower()
         output['value'] = test[1]
         if output['command'] == "PING":
             return  b"+PONG\r\n"
-        elif str.capitalize(output['command']) == "ECHO":
+        elif output['command'] == "echo":
             respond = f"+{output['value']}\r\n"
             return respond.encode()
+        
         
         
 
