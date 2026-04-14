@@ -20,14 +20,44 @@ class Redis():
         with connection:
             try:
                 while True:
-                    raw_request = connection.recv(1024).decode()
-                    if not raw_request:
-                        return
-                    connection.sendall(b"+PONG\r\n")
+                    respond = self.process_request(connection)
+                    connection.sendall(respond)
             
+            except ConnectionResetError as e:
+                pass
             except Exception as e:
                 print(e)
-                
+    
+    
+    def process_request(self, connection):
+        
+        raw_request  = connection.recv(1024).decode()
+        if not raw_request:
+            return b''
+        line = b""
+        output = {}
+        test = []
+        RESP_array = raw_request.split("\r\n")
+        element_numbers = RESP_array[0].split("*",1)[1]
+        print(element_numbers)
+        bulk_string = "".join(RESP_array[1:-1])
+        datas = bulk_string.split("$", int(element_numbers))[1:]
+        for data in datas:
+            number = ''
+            for s in data:
+                if s.isdigit():
+                    number += s
+                else:
+                    break
+            test.append(data[len(number) :])  
+        output['command'] = test[0]
+        output['value'] = test[1]
+        if output['command'] == "PING":
+            return  b"+PONG\r\n"
+        elif str.capitalize(output['command']) == "ECHO":
+            respond = f"+{output['value']}\r\n"
+            return respond.encode()
+        
         
 
 
