@@ -38,20 +38,20 @@ class Redis():
         output = {}
         test = []
         RESP_array = raw_request.split("\r\n")
-        element_numbers = RESP_array[0].split("*",1)[1]
-        print(element_numbers)
+        element_numbers = RESP_array[0].split("*",1)[1]        
         bulk_string = "".join(RESP_array[1:-1])
         datas = bulk_string.split("$", int(element_numbers))[1:]
-        for data in datas:
+        for i in range(len(datas)):
             number = ''
-            for s in data:
+            for s in datas[i]:
                 if s.isdigit():
                     number += s
                 else:
                     break
-            test.append(data[len(number) :])  
+            test.append(datas[i][len(number):])  
         output['command'] = test[0].lower()
-        output['value'] = test[1]
+        if len(test) > 1:
+            output["value"] = test[1]
         if output['command'] == "ping":
             return  b"+PONG\r\n"
         elif output['command'] == "echo":
