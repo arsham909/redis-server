@@ -39,7 +39,7 @@ class Redis():
         element_numbers = int(parts[0][1:]) # "*4" -> 4      
         tokens = []
         i = 1
-        for _ in element_numbers(range(element_numbers)):
+        for _ in range(element_numbers):
             tokens.append(parts[i+1])
             i += 2
         return tokens
@@ -54,6 +54,7 @@ class Redis():
         if command== "PING":
             return  b"+PONG\r\n"
         elif command == "ECHO" and len(tokens) >= 2:
+            
             return f"${len(tokens[1])}\r\n{tokens[1]}\r\n".encode()
         
         
