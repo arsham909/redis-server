@@ -55,7 +55,7 @@ class Redis():
         if output['command'] == "PING":
             return  b"+PONG\r\n"
         elif output['command'] == "echo":
-            respond = f"+{output['value']}\r\n"
+            respond = f"${len(output['value'])}\r\n{output['value']}\r\n"
             return respond.encode()
         
         
