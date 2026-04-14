@@ -5,7 +5,7 @@ class Redis():
     def __init__(self, host, port):
         self.host = host
         self.port = port
-        self.store; dict[str, str] = {}
+        self.store: dict[str, str] = {}
     
     def start_server(self):
         with socket.create_server((self.host, self.port), reuse_port=True) as server:
