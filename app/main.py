@@ -54,8 +54,16 @@ class Redis():
         if command== "PING":
             return  b"+PONG\r\n"
         elif command == "ECHO" and len(tokens) >= 2:
-            
             return f"${len(tokens[1])}\r\n{tokens[1]}\r\n".encode()
+        elif command == "SET" and len(tokens) >= 3:
+            self.store[tokens[1]] =tokens[2] 
+            return b"+OK\r\n"
+        
+        elif command == "GET" and len(tokens) >= 2:
+            if value:=self.store.get(tokens[1], None):
+                return f"${len(value)}\r\n{value}\r\n".encode()
+            return b"$-1\r\n"
+            
         
         
         
