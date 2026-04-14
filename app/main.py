@@ -5,58 +5,56 @@ class Redis():
     def __init__(self, host, port):
         self.host = host
         self.port = port
-        self.running = True
-        self.start_server()
+        self.store; dict[str, str] = {}
     
     def start_server(self):
         with socket.create_server((self.host, self.port), reuse_port=True) as server:
             print(f"Server is open on port {self.port}")
-            while self.running:
+            while True:
                 connection, address = server.accept()
-                thread = Thread(target=self.handle_client, args=(connection,))
-                thread.start()
+                Thread(target=self.handle_client, args=(connection,)).start()
     
-    def handle_client(self, connection):
+    def _handle_client(self, connection: socket.socket):
         with connection:
             try:
                 while True:
-                    respond = self.process_request(connection)
-                    connection.sendall(respond)
-            
+                    data = connection.recv(1024).decode()
+                    if not data:
+                        break
+                    response = self._dispatch(self._parse_resp(data))
+                    connection.sendall(response)
             except ConnectionResetError as e:
                 pass
             except Exception as e:
-                print(e)
+                print(f"[ERROR] {e}")
     
+    def _parse_resp(self, raw: str) -> list[str]:
+        """
+        Parse a RESP
+        Example input: "*2\r\n$3\r\nGET\r\n$3\r\nfoo\r\n"
+        Returns: ["GET", "foo"]
+        """
+
+        parts = raw.split("\r\n")
+        element_numbers = int(parts[0][1:]) # "*4" -> 4      
+        tokens = []
+        i = 1
+        for _ in element_numbers(range(element_numbers)):
+            tokens.append(parts[i+1])
+            i += 2
+        return tokens
     
-    def process_request(self, connection):
+    def _dispatch(self, tokens: list[str]) -> bytes:
         
-        raw_request  = connection.recv(1024).decode()
-        if not raw_request:
-            return b''
-        line = b""
-        output = {}
-        test = []
-        RESP_array = raw_request.split("\r\n")
-        element_numbers = RESP_array[0].split("*",1)[1]        
-        bulk_string = "".join(RESP_array[1:-1])
-        datas = bulk_string.split("$", int(element_numbers))[1:]
-        for i in range(len(datas)):
-            number = ''
-            for s in datas[i]:
-                if s.isdigit():
-                    number += s
-                else:
-                    break
-            test.append(datas[i][len(number):])  
-        output['command'] = test[0].lower()
-        if len(test) > 1:
-            output["value"] = test[1]
-        if output['command'] == "ping":
+        if not tokens:
+            return b"ERR empty command"
+        
+        command = tokens[0].upper()
+        
+        if command== "PING":
             return  b"+PONG\r\n"
-        elif output['command'] == "echo":
-            respond = f"${len(output['value'])}\r\n{output['value']}\r\n"
-            return respond.encode()
+        elif command == "ECHO" and len(tokens) >= 2:
+            return f"${len(tokens[1])}\r\n{tokens[1]}\r\n".encode()
         
         
         
@@ -64,17 +62,9 @@ class Redis():
 
 
 def main():
-    # You can use print statements as follows for debugging, they'll be visible when running tests.
     print("Logs from your program will appear here!")
-
-    # Uncomment the code below to pass the first stage
-    #
-    # server_socket = socket.create_server(("localhost", 6379), reuse_port=True)
-    # connection, _ = server_socket.accept() # wait for client
-    # while True:
-    #     connection.recv(1024).decode()
-    #     connection.sendall(b"+PONG\r\n")
     server_socket = Redis("localhost", 6379)
+    server_socket.start_server()
 
 if __name__ == "__main__":
     main()
