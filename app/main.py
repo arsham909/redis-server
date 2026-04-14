@@ -52,7 +52,7 @@ class Redis():
             test.append(data[len(number) :])  
         output['command'] = test[0].lower()
         output['value'] = test[1]
-        if output['command'] == "PING":
+        if output['command'] == "ping":
             return  b"+PONG\r\n"
         elif output['command'] == "echo":
             respond = f"${len(output['value'])}\r\n{output['value']}\r\n"
