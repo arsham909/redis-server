@@ -57,6 +57,7 @@ class Redis():
             return  b"+PONG\r\n"
         
         elif command == "ECHO" and len(tokens) >= 2:
+            print(self.list)
             return f"${len(tokens[1])}\r\n{tokens[1]}\r\n".encode()
         
         elif command == "SET" and len(tokens) >= 3:
@@ -73,11 +74,11 @@ class Redis():
         
         elif command == "RPUSH" and len(tokens) >= 3:
             key = tokens[1] 
-            if key not in self.store:
-                self.list[key] = [*tokens[2:]]
-            elif key in self.store:
-                self.list[key].extend(*tokens[2:])
-            respond = f":+{len(self.list[key])}\r\n"
+            elements = tokens[2:]
+            if key not in self.list:
+                self.list[key] = []
+            self.list[key].extend(elements)
+            respond = f":{len(self.list[key])}\r\n"
             return respond.encode()
         
         return b"-ERR unknown command\r\n"
