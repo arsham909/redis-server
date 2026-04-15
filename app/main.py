@@ -4,7 +4,8 @@ class Redis():
     def __init__(self, host, port):
         self.host = host
         self.port = port
-        self.store: dict[str, str] = {}
+        self.store: dict[str, list[str]|str] = {}
+        self.list : dict[str, list] = {}
     
     async def start_server(self):
         server = await asyncio.start_server(self._handle_client, self.host, self.port)
@@ -54,8 +55,10 @@ class Redis():
         
         if command== "PING":
             return  b"+PONG\r\n"
+        
         elif command == "ECHO" and len(tokens) >= 2:
             return f"${len(tokens[1])}\r\n{tokens[1]}\r\n".encode()
+        
         elif command == "SET" and len(tokens) >= 3:
             key, value = tokens[1] , tokens[2]
             self.store[key] = value
@@ -67,6 +70,19 @@ class Redis():
             if value:=self.store.get(tokens[1], None):
                 return f"${len(value)}\r\n{value}\r\n".encode()
             return b"$-1\r\n"
+        
+        elif command == "RPUSH" and len(tokens) >= 3:
+            key = tokens[1] 
+            if key not in self.store:
+                self.list[key] = [*tokens[2:]]
+            elif key in self.store:
+                self.list[key].extend(*tokens[2:])
+            respond = f":+{len(self.list[key])}\r\n"
+            return respond.encode()
+                
+            
+                
+        
         
         return b"-ERR unknown command\r\n"
             
