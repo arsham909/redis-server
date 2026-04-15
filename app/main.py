@@ -1,5 +1,4 @@
-import socket  # noqa: F401
-from  threading import Thread
+import asyncio
 
 class Redis():
     def __init__(self, host, port):
@@ -7,26 +6,28 @@ class Redis():
         self.port = port
         self.store: dict[str, str] = {}
     
-    def start_server(self):
-        with socket.create_server((self.host, self.port), reuse_port=True) as server:
-            print(f"Server is open on port {self.port}")
-            while True:
-                connection, address = server.accept()
-                Thread(target=self._handle_client, args=(connection,)).start()
+    async def start_server(self):
+        server = await asyncio.start_server(self._handle_client, self.host, self.port)
+        print(f"Server is open on port {self.port}")
+        async with server:
+            await server.serve_forever()
     
-    def _handle_client(self, connection: socket.socket):
-        with connection:
-            try:
-                while True:
-                    data = connection.recv(1024).decode()
-                    if not data:
-                        break
-                    response = self._dispatch(self._parse_resp(data))
-                    connection.sendall(response)
-            except ConnectionResetError as e:
-                pass
-            except Exception as e:
-                print(f"[ERROR] {e}")
+    async def _handle_client(self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter): 
+        try:
+            while True:
+                data = await reader.read(1024)
+                if not data: break
+                respond = await self._dispatch(self._parse_resp(data.decode()))
+                writer.write(respond)
+                await writer.drain()
+        except ConnectionResetError as e:
+            pass
+        except Exception as e:
+            print(f"[ERROR] {e}")
+        finally:  
+            writer.close()
+            await writer.wait_closed() 
+    
     
     def _parse_resp(self, raw: str) -> list[str]:
         """
@@ -44,7 +45,7 @@ class Redis():
             i += 2
         return tokens
     
-    def _dispatch(self, tokens: list[str]) -> bytes:
+    async def _dispatch(self, tokens: list[str]) -> bytes:
         
         if not tokens:
             return b"ERR empty command"
@@ -56,24 +57,39 @@ class Redis():
         elif command == "ECHO" and len(tokens) >= 2:
             return f"${len(tokens[1])}\r\n{tokens[1]}\r\n".encode()
         elif command == "SET" and len(tokens) >= 3:
-            self.store[tokens[1]] =tokens[2] 
+            key, value = tokens[1] , tokens[2]
+            self.store[key] = value
+            if len(tokens) >= 5 :
+                asyncio.create_task(self._expire_key(key, tokens[3], tokens[4]))
             return b"+OK\r\n"
         
         elif command == "GET" and len(tokens) >= 2:
             if value:=self.store.get(tokens[1], None):
                 return f"${len(value)}\r\n{value}\r\n".encode()
             return b"$-1\r\n"
+        
+        return b"-ERR unknown command\r\n"
             
+    async def _expire_key(self, key, unit, duration):
+        try:
+            seconds = float(duration)
+            if unit == "PX":
+                seconds /= 1000
+            await asyncio.sleep(seconds)    
+            
+            if key in self.store:
+                del self.store[key]
+        except Exception as e :
+            print(f"[EXPIRE ERROR] {e}")                
         
         
-        
-
-
-
-def main():
+async def main():
     print("Logs from your program will appear here!")
     server_socket = Redis("localhost", 6379)
-    server_socket.start_server()
+    await server_socket.start_server()
 
 if __name__ == "__main__":
-    main()
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        pass
