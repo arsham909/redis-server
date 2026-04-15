@@ -79,10 +79,6 @@ class Redis():
                 self.list[key].extend(*tokens[2:])
             respond = f":+{len(self.list[key])}\r\n"
             return respond.encode()
-                
-            
-                
-        
         
         return b"-ERR unknown command\r\n"
             
