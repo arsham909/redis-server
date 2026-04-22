@@ -111,7 +111,8 @@ class Redis():
             key = tokens[1]
             respond = "$-1\r\n"
             if key in self.list:
-                respond = f"${len(self.list[key])}\r\n{self.list[key]}\r\n"
+                popped = self.list[key].pop(0)
+                respond = f"${len(popped)}\r\n{popped}\r\n"
             return respond.encode()
         
         elif command == "LLEN" and len(tokens) >= 2:
