@@ -5,7 +5,7 @@ class Redis():
         self.host = host
         self.port = port
         self.store: dict[str, list[str]|str] = {}
-        self.list : dict[str, list] = {}
+        self.list = {}
     
     async def start_server(self):
         server = await asyncio.start_server(self._handle_client, self.host, self.port)
@@ -81,6 +81,23 @@ class Redis():
             respond = f":{len(self.list[key])}\r\n"
             return respond.encode()
         
+        elif command == "LRANGE" and len(tokens) == 4 :
+            try:
+                key, start, stop= tokens[1], int(tokens[2]), int(tokens[3])
+                if key not in self.list:
+                    return b"*0\r\n"
+                length = len(self.list[key])
+                if  start >= length or start > stop:
+                    return b"*0\r\n"
+                elif key in self.list and stop >= length:
+                    return self._list_values(key, start, length)
+                else:
+                    return self._list_values(key,start, stop)
+                    
+            except Exception as e:
+                print(e)
+            
+        
         return b"-ERR unknown command\r\n"
             
     async def _expire_key(self, key, unit, duration):
@@ -93,7 +110,24 @@ class Redis():
             if key in self.store:
                 del self.store[key]
         except Exception as e :
-            print(f"[EXPIRE ERROR] {e}")                
+            print(f"[EXPIRE ERROR] {e}")   
+    
+    def _list_values(self, key, start, stop) -> bytes:
+        list_values = self.list[key]
+        return self._encode_resp(list_values[start:stop])
+
+    
+    def _encode_resp(self, values: list) -> bytes:
+        respond = "*0\r\n"
+        try:
+            if values:
+                respond = f"*{len(values)}\r\n"
+                respond += ''.join([f"${len(i)}\r\n{i}\r\n" for i in values])
+        except  Exception as e:
+            print(e)
+        return respond.encode()
+                       
+
         
         
 async def main():
