@@ -109,7 +109,7 @@ class Redis():
         
         elif command == "LLEN":
             key = tokens[1]
-            list_key = self.list.get(key, None) 
+            list_key = self.list.get(key, []) 
             respond = f":{len(list_key)}\r\n"
             return respond.encode()
             
