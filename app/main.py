@@ -117,9 +117,9 @@ class Redis():
                 respond = f"${len(popped)}\r\n{popped}\r\n"
                 return respond.encode()
             elif  len(tokens)>2:
-                number = tokens[2]
+                number = int(tokens[2])
                 list_values = self.list[key][:number]
-                for _ in number:
+                for _ in range(number):
                     self.list[key].pop(0)
                 respond  = self._encode_resp(list_values)
                 return respond
