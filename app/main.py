@@ -96,6 +96,17 @@ class Redis():
                     
             except Exception as e:
                 print(e)
+        
+        elif command == "LPUSH" and len(tokens) >=3:
+            key = tokens[1]
+            elements = tokens[2:]
+            if key not in self.list:
+                self.list[key] = []
+            for i in elements:
+                self.list[key].insert(0,i)
+            respond = f":{len(self.list[key])}\r\n"
+            return respond.encode()
+            
             
         
         return b"-ERR unknown command\r\n"
