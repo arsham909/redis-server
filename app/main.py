@@ -114,7 +114,7 @@ class Redis():
     
     def _list_values(self, key, start, stop) -> bytes:
         list_values = self.list[key]
-        return self._encode_resp(list_values[start:stop])
+        return self._encode_resp(list_values[start:stop+1])
 
     
     def _encode_resp(self, values: list) -> bytes:
