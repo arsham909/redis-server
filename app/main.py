@@ -106,6 +106,12 @@ class Redis():
                 self.list[key].insert(0,i)
             respond = f":{len(self.list[key])}\r\n"
             return respond.encode()
+        
+        elif command == "LLEN":
+            key = tokens[1]
+            list_key = self.list.get(key, None) 
+            respond = f":{len(list_key)}\r\n"
+            return respond.encode()
             
             
         
