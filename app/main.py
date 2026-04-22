@@ -89,7 +89,7 @@ class Redis():
                 length = len(self.list[key])
                 if  start >= length or start > stop:
                     return b"*0\r\n"
-                elif key in self.list and stop >= length:
+                elif key in self.list and stop >= length or stop == -1:
                     return self._list_values(key, start, length)
                 else:
                     return self._list_values(key,start, stop)
@@ -114,6 +114,7 @@ class Redis():
     
     def _list_values(self, key, start, stop) -> bytes:
         list_values = self.list[key]
+        if abs(stop) > len(list_values): stop = 0
         return self._encode_resp(list_values[start:stop+1])
 
     
