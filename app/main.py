@@ -87,7 +87,7 @@ class Redis():
                 if key not in self.list:
                     return b"*0\r\n"
                 length = len(self.list[key])
-                if  start >= length or start > stop:
+                if  start >= length or abs(start) > abs(stop):
                     return b"*0\r\n"
                 elif key in self.list and stop >= length or stop == -1:
                     return self._list_values(key, start, length)
