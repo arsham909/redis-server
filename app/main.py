@@ -110,10 +110,19 @@ class Redis():
         elif command == "LPOP" and len(tokens) >= 2:
             key = tokens[1]
             respond = "$-1\r\n"
-            if key in self.list:
+            if key not in self.list:
+                return respond.encode()
+            elif len(tokens) == 2:
                 popped = self.list[key].pop(0)
                 respond = f"${len(popped)}\r\n{popped}\r\n"
-            return respond.encode()
+                return respond.encode()
+            elif  len(tokens)>2:
+                number = tokens[2]
+                list_values = self.list[key][:number]
+                for _ in number:
+                    self.list[key].pop(0)
+                respond  = self._encode_resp(list_values)
+                return respond
         
         elif command == "LLEN" and len(tokens) >= 2:
             key = tokens[1]
