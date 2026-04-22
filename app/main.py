@@ -107,7 +107,14 @@ class Redis():
             respond = f":{len(self.list[key])}\r\n"
             return respond.encode()
         
-        elif command == "LLEN":
+        elif command == "LPOP" and len(tokens) >= 2:
+            key = tokens[1]
+            respond = "$-1\r\n"
+            if key in self.list:
+                respond = f"${len(self.list[key])}\r\n{self.list[key]}\r\n"
+            return respond.encode()
+        
+        elif command == "LLEN" and len(tokens) >= 2:
             key = tokens[1]
             list_key = self.list.get(key, []) 
             respond = f":{len(list_key)}\r\n"
