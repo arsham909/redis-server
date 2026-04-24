@@ -124,6 +124,12 @@ class Redis():
                 respond  = self._encode_resp(list_values)
                 return respond
         
+        elif command == "BLPOP" and len(tokens) == 3:
+            key = tokens[1]
+            time_out = tokens[2]
+            await self.BLPOP(key, time_out)
+            
+        
         elif command == "LLEN" and len(tokens) >= 2:
             key = tokens[1]
             list_key = self.list.get(key, []) 
@@ -161,6 +167,15 @@ class Redis():
         except  Exception as e:
             print(e)
         return respond.encode()
+    
+    async def BLPOP(self, key, time):
+        if time == 0 :
+            while True:
+                if self.list.get(key, None):
+                   value = self.list.pop(key)
+                   return self._encode_resp([key,value]) 
+                    
+        
                        
 
         
